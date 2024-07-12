@@ -1,0 +1,149 @@
+To use the mod loader for WorldBox, follow these steps:
+
+Step-by-Step Guide
+
+1. Set Up the Mod Loader:
+   - Create a new C# Console Application project in your preferred development environment (e.g., Visual Studio).
+   - Copy the provided mod loader code into your project's `Program.cs` file.
+
+2. Prepare the Mods Directory:
+   - Create a folder named `Mods` in the same directory as your mod loader executable. This is where all your mod DLL files will be placed.
+
+3. Create a Mod:
+   - Create a new C# Class Library project for each mod you want to develop.
+   - In the mod project, reference the mod loader project if necessary.
+   - Implement the `IMod` interface in your mod. Here is an example of a simple mod:
+     ```csharp
+     using System;
+
+     public class MyMod : IMod
+     {
+         public void Initialize()
+         {
+             Console.WriteLine("MyMod has been initialized!");
+             // Add your mod logic here
+         }
+     }
+     ```
+   - Build the mod project to produce a DLL file.
+
+4. Place the Mod DLL in the Mods Directory:
+   - Copy the compiled DLL file of your mod into the `Mods` directory.
+
+5. Run the Mod Loader:
+   - Execute the mod loader executable (the console application you created in Step 1). This will:
+     - Scan the `Mods` directory for DLL files.
+     - Load each DLL as an assembly.
+     - Initialize each mod by calling the `Initialize` method of any class that implements the `IMod` interface.
+
+6. Verify Mod Initialization:
+   - Check the console output to verify that each mod has been loaded and initialized correctly. You should see messages indicating which mods have been loaded and initialized.
+
+Example
+
+1. Set Up Mod Loader:
+   - Save the following code as `Program.cs` in your mod loader console application project:
+     ```csharp
+     using System;
+     using System.Collections.Generic;
+     using System.IO;
+     using System.Reflection;
+
+     namespace WorldBoxModLoader
+     {
+         class Program
+         {
+             static void Main(string[] args)
+             {
+                 Console.WriteLine("WorldBox Mod Loader Starting...");
+                 string modsDirectory = "Mods"; // Directory where mods are stored
+
+                 // Ensure the mods directory exists
+                 if (!Directory.Exists(modsDirectory))
+                 {
+                     Console.WriteLine("Mods directory not found. Creating one...");
+                     Directory.CreateDirectory(modsDirectory);
+                 }
+
+                 // Load all mod DLLs
+                 string[] modFiles = Directory.GetFiles(modsDirectory, "*.dll");
+                 List<Assembly> loadedMods = new List<Assembly>();
+
+                 foreach (string modFile in modFiles)
+                 {
+                     try
+                     {
+                         Assembly modAssembly = Assembly.LoadFrom(modFile);
+                         loadedMods.Add(modAssembly);
+                         Console.WriteLine($"Loaded mod: {modFile}");
+                     }
+                     catch (Exception ex)
+                     {
+                         Console.WriteLine($"Failed to load mod: {modFile}");
+                         Console.WriteLine($"Error: {ex.Message}");
+                     }
+                 }
+
+                 // Initialize mods
+                 foreach (Assembly mod in loadedMods)
+                 {
+                     try
+                     {
+                         foreach (Type type in mod.GetTypes())
+                         {
+                             if (type.GetInterface("IMod") != null)
+                             {
+                                 IMod modInstance = (IMod)Activator.CreateInstance(type);
+                                 modInstance.Initialize();
+                                 Console.WriteLine($"Initialized mod: {type.Name}");
+                             }
+                         }
+                     }
+                     catch (Exception ex)
+                     {
+                         Console.WriteLine($"Failed to initialize mod: {mod.FullName}");
+                         Console.WriteLine($"Error: {ex.Message}");
+                     }
+                 }
+
+                 Console.WriteLine("WorldBox Mod Loader Finished.");
+             }
+         }
+
+         public interface IMod
+         {
+             void Initialize();
+         }
+     }
+     ```
+
+2. Prepare Mods Directory:
+   - Create a folder named `Mods` in the same directory as your mod loader executable.
+
+3. Create a Mod:
+   - Save the following code as `MyMod.cs` in your mod project:
+     ```csharp
+     using System;
+
+     public class MyMod : IMod
+     {
+         public void Initialize()
+         {
+             Console.WriteLine("MyMod has been initialized!");
+             // Add your mod logic here
+         }
+     }
+     ```
+
+4. Place Mod DLL in Mods Directory:
+   - After building your mod project, place the resulting `MyMod.dll` into the `Mods` folder.
+
+5. Run Mod Loader:
+   - Execute the mod loader program. The console output should indicate that `MyMod` has been loaded and initialized.
+
+ Additional Tips
+- Debugging: If your mod is not loading correctly, check the console output for error messages.
+- Updating Mods: When you update a mod, replace the old DLL in the `Mods` directory with the new version and rerun the mod loader.
+- Dependency Management: If your mods have dependencies on other mods or libraries, ensure all required DLLs are in the `Mods` directory.
+
+By following these steps, you should be able to create and load mods for WorldBox using the mod loader.
